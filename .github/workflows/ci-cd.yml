@@ -62,8 +62,8 @@ jobs:
 
             # Fetch the latest secrets
             echo "Fetching the latest secrets..."
-            BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/backend --query 'SecretString
-            FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/frontend --query 'SecretString
+            BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/backend --query 'SecretString' --output text)
+            FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/frontend --query 'SecretString' --output text)
 
             # Update the .env files
             echo "$BACKEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > backend/.env
