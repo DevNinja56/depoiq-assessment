@@ -113,6 +113,12 @@ jobs:
             set -e
             echo "Starting deployment process..."
 
+            # Login to ECR
+            echo "Logging in to Amazon ECR..."
+            AWS_REGION="${{ secrets.AWS_REGION }}"
+            AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+            $(aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com)
+
             # Define backend and frontend images
             BACKEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/backend:${{ github.sha }}"
             FRONTEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/frontend:${{ github.sha }}"
