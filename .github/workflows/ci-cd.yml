@@ -9,11 +9,10 @@ env:
   APP_NAME: "depo-iq"
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  AWS_ROLE_ARN: "arn:aws:iam::$AWS_ACCOUNT_ID:role/github-action-deployment-role"
-  BACKEND_IMAGE: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME/backend:${{ github.sha }}"
-  FRONTEND_IMAGE: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME/frontend:${{ github.sha }}"
-  BACKEND_SECRET_ID: $APP_NAME/backend
-  FRONTEND_SECRET_ID: $APP_NAME/frontend
+  BACKEND_IMAGE: "$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(APP_NAME)/backend:${{ github.sha }}"
+  FRONTEND_IMAGE: "$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(APP_NAME)/frontend:${{ github.sha }}"
+  BACKEND_SECRET_ID: $(APP_NAME)/backend
+  FRONTEND_SECRET_ID: $(APP_NAME)/frontend
   EC2_HOST: ${{ secrets.EC2_HOST }}
   EC2_USER: ${{ secrets.EC2_USER }}
   EC2_KEY: ${{ secrets.EC2_KEY }}
@@ -26,11 +25,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials for OIDC
+      - name: Configure AWS credentials from OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
+          role-session-name: "GitHubActionsSession"
 
       - name: Login to Amazon ECR
         id: login-ecr
