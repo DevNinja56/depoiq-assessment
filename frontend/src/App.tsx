@@ -5,7 +5,6 @@ import ErrorBoundary from "./components/ErrorBoundary"
 import { useUser } from "@clerk/clerk-react"
 import Dashboard from "./pages/Dashboard"
 import SignInPage from "./pages/SignIn"
-import SignUpPage from "./pages/SignUp"
 
 const App: React.FC = () => {
   const { user } = useUser()
@@ -22,7 +21,6 @@ const App: React.FC = () => {
               ) : (
                 <>
                   <Route path="/" element={<SignInPage />} />
-                  <Route path="/sign-up" element={<SignUpPage />} />
                 </>
               )
             }

@@ -27,6 +27,7 @@ const AnalysisTable: React.FC = () => {
           <span className={isDarkMode ? "text-gray-100" : "text-gray-800"}>Topic</span>
           <Tooltip title="Add a new topic">
             <Button
+              data-testid="add-topic-button"
               shape="circle"
               size="small"
               icon={<PlusOutlined />}
