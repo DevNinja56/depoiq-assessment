@@ -1,50 +1,57 @@
-# React + TypeScript + Vite
+# Depo IQ Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+This is the frontend for **Depo IQ**, built using React, Next.js, Ant Design, and TailwindCSS. It provides a responsive, modern UI for managing topics, including listing and adding topics.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Topics Listing Page**: Displays all topics with pagination or infinite scrolling.
+- **Add Topic Form**: A form to submit new topics with client-side validation.
+- **Responsive Design**: Ensures optimal experience on all devices.
+- **API Integration**: Communicates with the backend GraphQL API.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Prerequisites
 
-- Configure the top-level `parserOptions` property like this:
+- Node.js >= 16.x
+- Yarn or npm
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Getting Started
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/depo-iq.git
+   cd depo-iq/frontend
+   Install dependencies:
+   ```
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+npm install
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+Start the development server:
+
+npm run dev 
+
+Access the application at http://localhost:5173.
+
+Scripts
+dev: Start the development server.
+build: Build the application for production.
+start: Start the production server.
+Technologies
+Framework: React with Next.js
+Styling: TailwindCSS and Ant Design
+State Management: React Hooks
+Testing
+Unit testing and End-to-End (E2E) testing are implemented using Playwright.
+
+npm run test
+Docker Setup
+Build the Docker image:
+
+docker build -t depo-iq-frontend .
+Run the Docker container:
+
+docker run -p 3000:3000 depo-iq-frontend
+
+CI/CD
+This project uses GitLab CI/CD for automated testing and deployment.
