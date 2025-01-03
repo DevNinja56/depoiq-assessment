@@ -4,7 +4,7 @@
 
 ## Features
 
-- Full-stack application with a Next.js frontend and Node.js backend.
+- Full-stack application with a React.js frontend and Node.js backend.
 - GraphQL API for efficient data management.
 - Caching with Redis for optimized performance.
 - Responsive UI with TailwindCSS and Ant Design.
@@ -14,13 +14,19 @@
 
 ## Project Structure
 
-depo-iq/ ├── frontend/ # React-based frontend ├── backend/ # Node.js and GraphQL backend ├── docker-compose.yml # Docker setup └── README.md # Main project README
+```
+depo-iq/
+├── frontend/          # React-based frontend
+├── backend/           # Node.js and GraphQL backend
+├── docker-compose.yml # Docker setup
+└── README.md          # Main project README
+```
 
 ---
 
 ## Prerequisites
 
-- Node.js >= 16.x
+- Node.js >= 18.x
 - Docker and Docker Compose
 
 ---
@@ -30,28 +36,43 @@ depo-iq/ ├── frontend/ # React-based frontend ├── backend/ # Node.js
 ### Frontend
 
 1. Navigate to the frontend directory:
+   ```bash
    cd frontend
-   Install dependencies and start the server:
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the server:
+   ```bash
+   npm run dev
+   ```
+4. Access the frontend at [http://localhost:3000](http://localhost:3000).
 
-npm install
-npm run dev
-Access at http://localhost:3000.
+### Backend
 
-Backend
-Navigate to the backend directory:
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the server:
+   ```bash
+   npm run dev
+   ```
+4. Access the GraphQL Playground at [http://localhost:4000/graphql](http://localhost:4000/graphql).
 
-cd backend
-Install dependencies and start the server:
+### Docker Setup
 
-npm install
-npm run dev
-Access the GraphQL Playground at http://localhost:4000/graphql.
+1. Build and start the containers:
+   ```bash
+   docker-compose up --build
+   ```
+2. Access the application at [http://localhost:3000](http://localhost:3000).
 
-Docker Setup
-Build and start the containers:
+### CI/CD
 
-docker-compose up --build
-Access the application at http://localhost:3000.
-
-CI/CD
-GitLab CI/CD pipelines are configured for automated testing and deployment.
+This project uses Github Actions CI/CD for automated testing and deployment.

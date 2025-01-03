@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is the frontend for **Depo IQ**, built using React, Next.js, Ant Design, and TailwindCSS. It provides a responsive, modern UI for managing topics, including listing and adding topics.
+This is the frontend for **Depo IQ**, built using React.js, Ant Design, and TailwindCSS. It provides a responsive, modern UI for managing topics, including listing and adding topics.
 
 ## Features
 
@@ -11,47 +11,69 @@ This is the frontend for **Depo IQ**, built using React, Next.js, Ant Design, an
 - **Responsive Design**: Ensures optimal experience on all devices.
 - **API Integration**: Communicates with the backend GraphQL API.
 
+---
+
 ## Prerequisites
 
-- Node.js >= 16.x
+- Node.js >= 18.x
 - Yarn or npm
+
+---
 
 ## Getting Started
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/depo-iq.git
+   git clone https://github.com/DevNinja56/depoiq-assessment
    cd depo-iq/frontend
-   Install dependencies:
    ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Access the application at [http://localhost:5173](http://localhost:5173).
 
-npm install
+---
 
-Start the development server:
+## Scripts
 
-npm run dev 
+- `dev`: Start the development server.
+- `build`: Build the application for production.
+- `start`: Start the production server.
 
-Access the application at http://localhost:5173.
+---
 
-Scripts
-dev: Start the development server.
-build: Build the application for production.
-start: Start the production server.
-Technologies
-Framework: React with Next.js
-Styling: TailwindCSS and Ant Design
-State Management: React Hooks
-Testing
+## Technologies
+
+- **Framework**: React.Js
+- **Styling**: TailwindCSS and Ant Design
+- **State Management**: React Hooks
+
+---
+
+## Testing
+
 Unit testing and End-to-End (E2E) testing are implemented using Playwright.
 
+Run the tests:
+
+```bash
 npm run test
-Docker Setup
-Build the Docker image:
+```
 
-docker build -t depo-iq-frontend .
-Run the Docker container:
+---
 
-docker run -p 3000:3000 depo-iq-frontend
+## Docker Setup
 
-CI/CD
-This project uses GitLab CI/CD for automated testing and deployment.
+1. Build the Docker image:
+   ```bash
+   docker build -t depo-iq-frontend .
+   ```
+2. Run the Docker container:
+   ```bash
+   docker run -p 3000:3000 depo-iq-frontend
+   ```
