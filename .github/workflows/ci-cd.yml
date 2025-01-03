@@ -6,13 +6,12 @@ on:
       - main # Run the workflow only for the main branch
 
 env:
+  BRANCH: ${{ github.sha }}"
   APP_NAME: "depo-iq"
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  BACKEND_IMAGE: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME/backend:${{ github.sha }}"
-  FRONTEND_IMAGE: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME/frontend:${{ github.sha }}"
-  BACKEND_SECRET_ID: $APP_NAME/backend
-  FRONTEND_SECRET_ID: $APP_NAME/frontend
+  BACKEND_IMAGE: ""
+  FRONTEND_IMAGE: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ github.sha }}"
   EC2_HOST: ${{ secrets.EC2_HOST }}
   EC2_USER: ${{ secrets.EC2_USER }}
   EC2_KEY: ${{ secrets.EC2_KEY }}
@@ -43,13 +42,14 @@ jobs:
 
       - name: Fetch Backend Secrets
         run: |
-          BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.BACKEND_SECRET_ID }} --query 'SecretString' --output text)
+          BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/backend --query 'SecretString' --output text)
           echo "$BACKEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > backend/.env
 
       - name: Build and Push Backend Image
         run: |
-          docker build -t ${{ env.BACKEND_IMAGE }} -f backend/Dockerfile backend/
-          docker push ${{ env.BACKEND_IMAGE }}
+          BACKEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/backend:${{ env.BRANCH }}"
+          docker build -t $BACKEND_IMAGE -f backend/Dockerfile backend/
+          docker push $BACKEND_IMAGE
 
   build-frontend:
     name: Build and Push Frontend
@@ -76,13 +76,14 @@ jobs:
 
       - name: Fetch Frontend Secrets
         run: |
-          FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.FRONTEND_SECRET_ID }} --query 'SecretString' --output text)
+          FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/frontend --query 'SecretString' --output text)
           echo "$FRONTEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > frontend/.env
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -t ${{ env.FRONTEND_IMAGE }} -f frontend/Dockerfile frontend/
-          docker push ${{ env.FRONTEND_IMAGE }}
+          FRONTEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ env.BRANCH }}"
+          docker build -t $FRONTEND_IMAGE -f frontend/Dockerfile frontend/
+          docker push $FRONTEND_IMAGE
 
   deploy:
     name: Deploy to EC2
@@ -114,6 +115,9 @@ jobs:
             set -e
             echo "Starting deployment process..."
 
+            FRONTEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ env.BRANCH }}"
+            BACKEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/backend:${{ env.BRANCH }}"
+
             # MongoDB Deployment
             echo "Pulling and starting MongoDB container..."
             docker pull mongo:latest
@@ -138,7 +142,7 @@ jobs:
               --link mongo:mongo \
               --link redis:redis \
               -p 4000:4000 \
-              ${{ secrets.BACKEND_IMAGE }}
+              $BACKEND_IMAGE
 
             # Frontend Deployment
             echo "Deploying frontend..."
@@ -148,7 +152,7 @@ jobs:
             docker run -d \
               --name frontend \
               -p 3000:3000 \
-              ${{ secrets.FRONTEND_IMAGE }}
+              $FRONTEND_IMAGE
 
             # Reload Nginx
             echo "Reloading Nginx..."
