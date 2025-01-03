@@ -15,8 +15,8 @@ env:
   EC2_KEY: ${{ secrets.EC2_KEY }}
 
 jobs:
-  build-backend:
-    name: Build and Push Backend
+  build-and-deploy:
+    name: Build and Deploy
 
     runs-on: ubuntu-latest
     permissions:
@@ -33,55 +33,28 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
           role-session-name: "GitHubActionsSession"
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Fetch Backend Secrets
-        run: |
-          BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/backend --query 'SecretString' --output text)
-          echo "$BACKEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > backend/.env
-
-      - name: Build and Push Backend Image
-        run: |
-          BACKEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/backend:${{ env.BRANCH }}"
-          docker build -t $BACKEND_IMAGE -f backend/Dockerfile backend/
-          docker push $BACKEND_IMAGE
-
-  build-frontend:
-    name: Build and Push Frontend
-
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials from OIDC
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
-          role-session-name: "GitHubActionsSession"
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
 
       - name: Fetch Frontend Secrets
         run: |
           FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/frontend --query 'SecretString' --output text)
           echo "$FRONTEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > frontend/.env
 
-      - name: Build and Push Frontend Image
+      - name: Fetch Backend Secrets
         run: |
-          FRONTEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ env.BRANCH }}"
-          docker build -t $FRONTEND_IMAGE -f frontend/Dockerfile frontend/
-          docker push $FRONTEND_IMAGE
+          BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/backend --query 'SecretString' --output text)
+          echo "$BACKEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > backend/.env
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ env.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Deploy Application
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
+            set -e
+            echo "Starting deployment process..."
 
   deploy:
     name: Deploy to EC2
@@ -113,55 +86,14 @@ jobs:
             set -e
             echo "Starting deployment process..."
 
-            # Login to ECR
-            echo "Logging in to Amazon ECR..."
-            AWS_REGION="${{ secrets.AWS_REGION }}"
-            AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+            # Pull the latest code
+            cd /home/ubuntu/app
+            git pull --no-ff
 
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-            # Define backend and frontend images
-            BACKEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/backend:${{ github.sha }}"
-            FRONTEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/frontend:${{ github.sha }}"
-
-            echo "Backend Image: $BACKEND_IMAGE"
-            echo "Frontend Image: $FRONTEND_IMAGE"
-
-            # MongoDB Deployment
-            echo "Pulling and starting MongoDB container..."
-            docker pull mongo:latest
-            docker stop mongo || true
-            docker rm mongo || true
-            docker run -d --name mongo -p 27017:27017 mongo:latest
-
-            # Redis Deployment
-            echo "Pulling and starting Redis container..."
-            docker pull redis:latest
-            docker stop redis || true
-            docker rm redis || true
-            docker run -d --name redis -p 6379:6379 redis:latest
-
-            # Backend Deployment
-            echo "Deploying backend..."
-            docker pull "$BACKEND_IMAGE" || { echo "Failed to pull image from ECR"; exit 1; }
-            docker stop backend || true
-            docker rm backend || true
-            docker run -d \
-              --name backend \
-              --link mongo:mongo \
-              --link redis:redis \
-              -p 4000:4000 \
-              "$BACKEND_IMAGE"
-
-            # Frontend Deployment
-            echo "Deploying frontend..."
-            docker pull "$FRONTEND_IMAGE" || { echo "Failed to pull image from ECR"; exit 1; }
-            docker stop frontend || true
-            docker rm frontend || true
-            docker run -d \
-              --name frontend \
-              -p 3000:3000 \
-              "$FRONTEND_IMAGE"
+            # Build the backend and frontend images
+            echo "Building backend image..."
+            docker compose build --no-cache
+            docker compose up -d
 
             # Reload Nginx
             echo "Reloading Nginx..."
