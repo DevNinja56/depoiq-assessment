@@ -43,10 +43,10 @@ export const resolvers = {
   Mutation: {
     addTopic: async (
       _: any,
-      { title, description, page, limit }: { title: string; description: string; page: number; limit: number },
+      { title, page, limit }: { title: string; page: number; limit: number },
       { redis }: { redis: Redis }
     ) => {
-      const newTopic = new Topic({ title, description })
+      const newTopic = new Topic({ title })
       await newTopic.save()
       // Clear cache
       await redis.del(`topics:page:${page}:limit:${limit}`)
@@ -59,7 +59,6 @@ export const typeDefs = gql`
   type Topic {
     id: ID!
     title: String!
-    description: String
   }
 
   type PaginatedTopics {
@@ -74,6 +73,6 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    addTopic(title: String!, description: String!, page: Int!, limit: Int!): Topic!
+    addTopic(title: String!, page: Int!, limit: Int!): Topic!
   }
 `

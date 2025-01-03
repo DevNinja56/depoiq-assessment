@@ -1,12 +1,12 @@
 import redis from "../config/redis"
 import Topic from "../models/Topic"
 
-const addTopic = async (data: { title: string; description: string }) => {
-  const { title, description } = data
+const addTopic = async (data: { title: string }) => {
+  const { title } = data
 
   try {
     // Create a new topic
-    const newTopic = new Topic({ title, description })
+    const newTopic = new Topic({ title })
     await newTopic.save()
     // Clear cache
     await redis.del("topics")

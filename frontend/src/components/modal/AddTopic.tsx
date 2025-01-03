@@ -19,12 +19,15 @@ const AddTopicModal = ({ isModalOpen, page, limit, setIsModalOpen }: AddTopicMod
   })
 
   // Handle form submission
-  const handleSubmit = async (values: { title: string; description: string }) => {
+  const handleSubmit = async (values: { title: string }) => {
     try {
+      if (!values.title.trim()) {
+        return notification.error({ message: "Please fill out all fields" })
+      }
+
       await addTopic({
         variables: {
           title: values.title.trim(),
-          description: values.description.trim(),
           page,
           limit
         }
@@ -52,16 +55,9 @@ const AddTopicModal = ({ isModalOpen, page, limit, setIsModalOpen }: AddTopicMod
         <Form.Item label="Title" name="title" rules={[{ required: true, message: "Please enter a title" }]}>
           <Input />
         </Form.Item>
-        <Form.Item
-          label="Description"
-          name="description"
-          rules={[{ required: true, message: "Please enter a description" }]}
-        >
-          <Input.TextArea rows={4} />
-        </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading} block>
-            Submit
+          <Button type="primary" className="mt-1" htmlType="submit" loading={loading} block>
+            Add
           </Button>
         </Form.Item>
       </Form>

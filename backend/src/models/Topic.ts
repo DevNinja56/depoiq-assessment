@@ -4,13 +4,11 @@ import config from "../config"
 
 type TopicDocument = Document & {
   title: string
-  description?: string
 }
 
 const topicSchema = new Schema(
   {
-    title: { type: String, required: true },
-    description: { type: String }
+    title: { type: String, required: true }
   },
   {
     timestamps: true

@@ -3,14 +3,14 @@ import TopicService from "../services/topic.service"
 
 // Add a new topic
 export const addTopic = async (req: Request, res: Response) => {
-  const { title, description } = req.body
+  const { title } = req.body
 
   if (!title) {
     return res.status(400).json({ error: "Title is required" })
   }
 
   try {
-    const newTopic = await TopicService.addTopic({ title, description })
+    const newTopic = await TopicService.addTopic({ title })
     res.status(201).json({
       status: "success",
       message: "Topic created successfully",

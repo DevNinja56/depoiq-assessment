@@ -7,7 +7,6 @@ export const GET_TOPICS = gql`
       data {
         id
         title
-        description
       }
       currentPage
       nextPage

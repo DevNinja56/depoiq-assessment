@@ -24,7 +24,7 @@ export const fetchTopics = async (): Promise<Topic[]> => {
 }
 
 // Add a new topic
-export const addTopic = async (data: { title: string; description: string }): Promise<Topic> => {
+export const addTopic = async (data: { title: string }): Promise<Topic> => {
   try {
     const response = await fetch(`${BASE_URL}/topics`, {
       method: "POST",
