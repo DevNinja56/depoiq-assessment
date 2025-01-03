@@ -9,11 +9,14 @@ env:
   APP_NAME: "depo-iq"
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  AWS_ROLE_ARN: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
-  BACKEND_IMAGE: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/backend:${{ github.sha }}"
-  FRONTEND_IMAGE: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ github.sha }}"
-  BACKEND_SECRET_ID: ${{ env.APP_NAME }}/backend
-  FRONTEND_SECRET_ID: ${{ env.APP_NAME }}/frontend
+  AWS_ROLE_ARN: "arn:aws:iam::$AWS_ACCOUNT_ID:role/github-action-deployment-role"
+  BACKEND_IMAGE: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME/backend:${{ github.sha }}"
+  FRONTEND_IMAGE: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP_NAME/frontend:${{ github.sha }}"
+  BACKEND_SECRET_ID: $APP_NAME/backend
+  FRONTEND_SECRET_ID: $APP_NAME/frontend
+  EC2_HOST: ${{ secrets.EC2_HOST }}
+  EC2_USER: ${{ secrets.EC2_USER }}
+  EC2_KEY: ${{ secrets.EC2_KEY }}
 
 jobs:
   build-backend:
@@ -54,7 +57,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -79,17 +82,17 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
+          echo "${{ env.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
             # Pull and start MongoDB
             docker pull mongo:latest
             docker stop mongo || true
