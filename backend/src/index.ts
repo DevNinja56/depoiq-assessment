@@ -16,7 +16,7 @@ dotenv.config()
 const app: Express = express()
 const NAMESPACE = "Server"
 
-app.use(cors({ origin: ["http://localhost", "http://13.202.240.140"] }))
+app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
