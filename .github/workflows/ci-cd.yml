@@ -108,13 +108,16 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy Application
+        env:
+          BACKEND_IMAGE: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/backend:${{ env.BRANCH }}"
+          FRONTEND_IMAGE: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/frontend:${{ env. }}"
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             echo "Starting deployment process..."
 
-            FRONTEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ env.BRANCH }}"
-            BACKEND_IMAGE="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/backend:${{ env.BRANCH }}"
+            echo "Backend Image: $BACKEND_IMAGE"
+            echo "Frontend Image: $FRONTEND_IMAGE"
 
             # MongoDB Deployment
             echo "Pulling and starting MongoDB container..."
@@ -132,7 +135,7 @@ jobs:
 
             # Backend Deployment
             echo "Deploying backend..."
-            docker pull ${{ secrets.BACKEND_IMAGE }}
+            docker pull "$BACKEND_IMAGE"
             docker stop backend || true
             docker rm backend || true
             docker run -d \
@@ -140,17 +143,17 @@ jobs:
               --link mongo:mongo \
               --link redis:redis \
               -p 4000:4000 \
-              $BACKEND_IMAGE
+              "$BACKEND_IMAGE"
 
             # Frontend Deployment
             echo "Deploying frontend..."
-            docker pull ${{ secrets.FRONTEND_IMAGE }}
+            docker pull "$FRONTEND_IMAGE"
             docker stop frontend || true
             docker rm frontend || true
             docker run -d \
               --name frontend \
               -p 3000:3000 \
-              $FRONTEND_IMAGE
+              "$FRONTEND_IMAGE"
 
             # Reload Nginx
             echo "Reloading Nginx..."
