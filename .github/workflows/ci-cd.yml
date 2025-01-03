@@ -34,16 +34,6 @@ jobs:
           role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
           role-session-name: "GitHubActionsSession"
 
-      - name: Fetch Frontend Secrets
-        run: |
-          FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/frontend --query 'SecretString' --output text)
-          echo "$FRONTEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > frontend/.env
-
-      - name: Fetch Backend Secrets
-        run: |
-          BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.APP_NAME }}/backend --query 'SecretString' --output text)
-          echo "$BACKEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > backend/.env
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
