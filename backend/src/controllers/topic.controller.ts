@@ -25,10 +25,10 @@ export const addTopic = async (req: Request, res: Response) => {
   }
 }
 
-export const getAllTpoics = async (_req: Request, res: Response) => {
+export const getAllTopics = async (_req: Request, res: Response) => {
   try {
     // Fetch all topics
-    const topics = await TopicService.getAllTpoics()
+    const topics = await TopicService.getAllTopics()
     res.status(200).json({
       status: "success",
       message: "Topics fetched successfully",
@@ -45,5 +45,5 @@ export const getAllTpoics = async (_req: Request, res: Response) => {
 
 export default {
   addTopic,
-  getAllTpoics
+  getAllTopics
 }

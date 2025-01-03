@@ -16,7 +16,7 @@ const addTopic = async (data: { title: string }) => {
   }
 }
 
-const getAllTpoics = async () => {
+const getAllTopics = async () => {
   try {
     // Check if topics are cached
     const cachedTopics = await redis.get("topics")
@@ -35,5 +35,5 @@ const getAllTpoics = async () => {
 
 export default {
   addTopic,
-  getAllTpoics
+  getAllTopics
 }

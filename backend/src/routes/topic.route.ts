@@ -5,7 +5,7 @@ import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node"
 const router = express.Router()
 
 // GET /api/topics
-router.get("/", ClerkExpressRequireAuth(), TopicController.getAllTpoics)
+router.get("/", ClerkExpressRequireAuth(), TopicController.getAllTopics)
 
 // POST /api/topics
 router.post("/", ClerkExpressRequireAuth(), TopicController.addTopic)
