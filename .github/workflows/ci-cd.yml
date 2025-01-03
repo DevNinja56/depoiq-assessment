@@ -63,11 +63,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials for OIDC
+      - name: Configure AWS credentials from OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
+          role-session-name: "GitHubActionsSession"
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -93,11 +94,12 @@ jobs:
 
     needs: [build-backend, build-frontend]
     steps:
-      - name: Configure AWS Credentials for OIDC
+      - name: Configure AWS credentials from OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
+          role-session-name: "GitHubActionsSession"
 
       - name: Set up SSH
         run: |
