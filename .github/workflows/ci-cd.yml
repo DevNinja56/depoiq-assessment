@@ -56,36 +56,6 @@ jobs:
             set -e
             echo "Starting deployment process..."
 
-  deploy:
-    name: Deploy to EC2
-
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-
-    needs: [build-backend, build-frontend]
-
-    steps:
-      - name: Configure AWS credentials from OIDC
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: "arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
-          role-session-name: "GitHubActionsSession"
-
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ env.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Deploy Application
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
-            set -e
-            echo "Starting deployment process..."
-
             # Pull the latest code
             cd /home/ubuntu/app
             git pull --no-ff
