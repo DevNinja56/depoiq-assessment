@@ -5,15 +5,17 @@ import { GET_TOPICS } from "../../graphql/queries"
 
 interface AddTopicModalProps {
   isModalOpen: boolean
+  page: number
+  limit: number
   setIsModalOpen: (isOpen: boolean) => void
 }
 
-const AddTopicModal = ({ isModalOpen, setIsModalOpen }: AddTopicModalProps) => {
+const AddTopicModal = ({ isModalOpen, page, limit, setIsModalOpen }: AddTopicModalProps) => {
   const [form] = Form.useForm()
 
   // Define the mutation with Apollo's useMutation hook
   const [addTopic, { loading }] = useMutation(ADD_TOPIC, {
-    refetchQueries: [{ query: GET_TOPICS }] // Automatically refetch topics after adding
+    refetchQueries: [{ query: GET_TOPICS, variables: { page, limit } }]
   })
 
   // Handle form submission
@@ -22,7 +24,9 @@ const AddTopicModal = ({ isModalOpen, setIsModalOpen }: AddTopicModalProps) => {
       await addTopic({
         variables: {
           title: values.title.trim(),
-          description: values.description.trim()
+          description: values.description.trim(),
+          page,
+          limit
         }
       })
       notification.success({ message: "Topic added successfully!" })

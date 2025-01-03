@@ -1,22 +1,45 @@
 import React, { useState } from "react"
 import { Table, Alert, Button, Tooltip } from "antd"
-import { GetTopicsQuery, Topic } from "../interface"
 import { PlusOutlined } from "@ant-design/icons"
-import AddTopicModal from "./modal/AddTopic"
-import { useTheme } from "../context/ThemeContext"
 import { useQuery } from "@apollo/client"
 import { GET_TOPICS } from "../graphql/queries"
+import { useTheme } from "../context/ThemeContext"
 import SpinLoader from "./SpinLoader"
+import AddTopicModal from "./modal/AddTopic"
+import { GetTopicsQuery, Topic } from "../interface"
 
 const AnalysisTable: React.FC = () => {
   const { isDarkMode } = useTheme()
-  const { data, loading, error } = useQuery<GetTopicsQuery>(GET_TOPICS)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  // Fetch paginated data
+  const { data, loading, error, refetch } = useQuery<GetTopicsQuery>(GET_TOPICS, {
+    variables: { page: currentPage, limit: pageSize }
+  })
 
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Open Modal
   const handleAddTopicClick = () => {
     setIsModalOpen(true)
+  }
+
+  // Handle table pagination change
+  const handleTableChange = (
+    pagination: { current?: number; pageSize?: number },
+    _filters: Record<string, any>,
+    _sorter: any,
+    _extra: any
+  ) => {
+    const current = pagination.current || 1
+    const pageSize = pagination.pageSize || 10
+    setCurrentPage(current)
+    setPageSize(pageSize)
+    refetch({
+      page: current,
+      limit: pageSize
+    })
   }
 
   const columns = [
@@ -27,7 +50,6 @@ const AnalysisTable: React.FC = () => {
           <span className={isDarkMode ? "text-gray-100" : "text-gray-800"}>Topic</span>
           <Tooltip title="Add a new topic">
             <Button
-              data-testid="add-topic-button"
               shape="circle"
               size="small"
               icon={<PlusOutlined />}
@@ -44,9 +66,6 @@ const AnalysisTable: React.FC = () => {
       render: (_: string, record: Topic) => (
         <div>
           <h4 className={isDarkMode ? "text-gray-100" : "text-gray-800"}>{record.title}</h4>
-          <p className={isDarkMode ? "text-gray-400" : "text-gray-500"}>
-            {record.description || "No description provided"}
-          </p>
         </div>
       )
     },
@@ -68,15 +87,21 @@ const AnalysisTable: React.FC = () => {
       <h1 className="text-xl font-bold mb-4">Cross Deposition Analysis</h1>
       <Table
         columns={columns}
-        dataSource={data?.topics}
+        dataSource={data?.topics.data}
         rowKey="id"
-        pagination={false}
+        pagination={{
+          current: currentPage,
+          pageSize: pageSize,
+          total: data?.topics.count,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "20", "50", "100"]
+        }}
+        onChange={handleTableChange}
         bordered
-        className={`${isDarkMode ? "bg-gray-700 dark:text-gray-200 dark:border-gray-600" : "bg-white text-gray-800"}`}
       />
 
       {/* Modal for Adding Topic */}
-      <AddTopicModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      <AddTopicModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} page={currentPage} limit={pageSize} />
     </div>
   )
 }

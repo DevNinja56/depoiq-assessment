@@ -1,5 +1,10 @@
 export interface GetTopicsQuery {
-  topics: Topic[]
+  topics: {
+    count: number
+    data: Topic[]
+    currentPage: number
+    nextPage: number | null
+  }
 }
 
 export interface Topic {
