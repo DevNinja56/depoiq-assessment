@@ -108,13 +108,14 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy Application
-        env:
-          BACKEND_IMAGE: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/depo-iq/backend:${{ env.BRANCH }}"
-          FRONTEND_IMAGE: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/depo-iq/frontend:${{ env.BRANCH }}"
         run: |
           ssh -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
             set -e
             echo "Starting deployment process..."
+
+            # Define backend and frontend images
+            BACKEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/backend:${{ github.sha }}"
+            FRONTEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/frontend:${{ github.sha }}"
 
             echo "Backend Image: $BACKEND_IMAGE"
             echo "Frontend Image: $FRONTEND_IMAGE"
