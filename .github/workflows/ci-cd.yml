@@ -6,7 +6,7 @@ on:
       - main # Run the workflow only for the main branch
 
 env:
-  BRANCH: ${{ github.sha }}"
+  BRANCH: ${{ github.sha }}
   APP_NAME: "depo-iq"
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_REGION: ${{ secrets.AWS_REGION }}
