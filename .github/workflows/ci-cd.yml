@@ -1,0 +1,119 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main # Run the workflow only for the main branch
+
+env:
+  APP_NAME: "depo-iq"
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ROLE_ARN: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-action-deployment-role"
+  BACKEND_IMAGE: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/backend:${{ github.sha }}"
+  FRONTEND_IMAGE: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.APP_NAME }}/frontend:${{ github.sha }}"
+  BACKEND_SECRET_ID: ${{ env.APP_NAME }}/backend
+  FRONTEND_SECRET_ID: ${{ env.APP_NAME }}/frontend
+
+jobs:
+  build-backend:
+    name: Build and Push Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials for OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Fetch Backend Secrets
+        run: |
+          BACKEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.BACKEND_SECRET_ID }} --query 'SecretString' --output text)
+          echo "$BACKEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > backend/.env
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t ${{ env.BACKEND_IMAGE }} -f backend/Dockerfile backend/
+          docker push ${{ env.BACKEND_IMAGE }}
+
+  build-frontend:
+    name: Build and Push Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials for OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Fetch Frontend Secrets
+        run: |
+          FRONTEND_SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id ${{ env.FRONTEND_SECRET_ID }} --query 'SecretString' --output text)
+          echo "$FRONTEND_SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > frontend/.env
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t ${{ env.FRONTEND_IMAGE }} -f frontend/Dockerfile frontend/
+          docker push ${{ env.FRONTEND_IMAGE }}
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    steps:
+      - name: Configure AWS Credentials for OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Deploy Application
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Pull and start MongoDB
+            docker pull mongo:latest
+            docker stop mongo || true
+            docker rm mongo || true
+            docker run -d --name mongo -p 27017:27017 mongo:latest
+
+            # Pull and start Redis
+            docker pull redis:latest
+            docker stop redis || true
+            docker rm redis || true
+            docker run -d --name redis -p 6379:6379 redis:latest
+
+            # Deploy Backend
+            docker pull ${{ env.BACKEND_IMAGE }}
+            docker stop backend || true
+            docker rm backend || true
+            docker run -d --name backend --link mongo:mongo --link redis:redis -p 4000:4000 ${{ env.BACKEND_IMAGE }}
+
+            # Deploy Frontend
+            docker pull ${{ env.FRONTEND_IMAGE }}
+            docker stop frontend || true
+            docker rm frontend || true
+            docker run -d --name frontend -p 3000:3000 ${{ env.FRONTEND_IMAGE }}
+
+            # Reload Nginx if necessary
+            sudo systemctl reload nginx
+          EOF
