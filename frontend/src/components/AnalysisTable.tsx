@@ -46,7 +46,7 @@ const AnalysisTable: React.FC = () => {
     {
       width: "300px",
       title: (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span className={isDarkMode ? "text-gray-100" : "text-gray-800"}>Topic</span>
           <Tooltip title="Add a new topic">
             <Button
@@ -97,6 +97,7 @@ const AnalysisTable: React.FC = () => {
           pageSizeOptions: ["10", "20", "50", "100"]
         }}
         onChange={handleTableChange}
+        className="overflow-x-scroll sm:overflow-x-hidden"
         bordered
       />
 

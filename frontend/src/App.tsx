@@ -1,5 +1,5 @@
 import React from "react"
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider } from "./context/ThemeContext"
 import ErrorBoundary from "./components/ErrorBoundary"
 import { useUser } from "@clerk/clerk-react"
@@ -24,6 +24,7 @@ const App: React.FC = () => {
                 </>
               )
             }
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
       </ThemeProvider>
