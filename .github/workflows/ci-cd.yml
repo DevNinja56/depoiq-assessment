@@ -117,7 +117,8 @@ jobs:
             echo "Logging in to Amazon ECR..."
             AWS_REGION="${{ secrets.AWS_REGION }}"
             AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
-            $(aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com)
+
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
             # Define backend and frontend images
             BACKEND_IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/depo-iq/backend:${{ github.sha }}"
@@ -142,7 +143,7 @@ jobs:
 
             # Backend Deployment
             echo "Deploying backend..."
-            docker pull "$BACKEND_IMAGE"
+            docker pull "$BACKEND_IMAGE" || { echo "Failed to pull image from ECR"; exit 1; }
             docker stop backend || true
             docker rm backend || true
             docker run -d \
@@ -154,7 +155,7 @@ jobs:
 
             # Frontend Deployment
             echo "Deploying frontend..."
-            docker pull "$FRONTEND_IMAGE"
+            docker pull "$FRONTEND_IMAGE" || { echo "Failed to pull image from ECR"; exit 1; }
             docker stop frontend || true
             docker rm frontend || true
             docker run -d \
