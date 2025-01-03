@@ -58,7 +58,7 @@ jobs:
 
             # Pull the latest code
             cd /home/ubuntu/app
-            git pull --no-ff
+            git pull origin main --no-ff
 
             # Build the backend and frontend images
             echo "Building backend image..."
