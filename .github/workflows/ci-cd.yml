@@ -93,6 +93,7 @@ jobs:
       contents: read
 
     needs: [build-backend, build-frontend]
+
     steps:
       - name: Configure AWS credentials from OIDC
         uses: aws-actions/configure-aws-credentials@v2
@@ -104,36 +105,54 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ env.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_KEY }}" | base64 -d > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << 'EOF'
-            # Pull and start MongoDB
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            echo "Starting deployment process..."
+
+            # MongoDB Deployment
+            echo "Pulling and starting MongoDB container..."
             docker pull mongo:latest
             docker stop mongo || true
             docker rm mongo || true
             docker run -d --name mongo -p 27017:27017 mongo:latest
 
-            # Pull and start Redis
+            # Redis Deployment
+            echo "Pulling and starting Redis container..."
             docker pull redis:latest
             docker stop redis || true
             docker rm redis || true
             docker run -d --name redis -p 6379:6379 redis:latest
 
-            # Deploy Backend
-            docker pull ${{ env.BACKEND_IMAGE }}
+            # Backend Deployment
+            echo "Deploying backend..."
+            docker pull ${{ secrets.BACKEND_IMAGE }}
             docker stop backend || true
             docker rm backend || true
-            docker run -d --name backend --link mongo:mongo --link redis:redis -p 4000:4000 ${{ env.BACKEND_IMAGE }}
+            docker run -d \
+              --name backend \
+              --link mongo:mongo \
+              --link redis:redis \
+              -p 4000:4000 \
+              ${{ secrets.BACKEND_IMAGE }}
 
-            # Deploy Frontend
-            docker pull ${{ env.FRONTEND_IMAGE }}
+            # Frontend Deployment
+            echo "Deploying frontend..."
+            docker pull ${{ secrets.FRONTEND_IMAGE }}
             docker stop frontend || true
             docker rm frontend || true
-            docker run -d --name frontend -p 3000:3000 ${{ env.FRONTEND_IMAGE }}
+            docker run -d \
+              --name frontend \
+              -p 3000:3000 \
+              ${{ secrets.FRONTEND_IMAGE }}
 
-            # Reload Nginx if necessary
+            # Reload Nginx
+            echo "Reloading Nginx..."
             sudo systemctl reload nginx
+
+            echo "Deployment completed successfully!"
           EOF
